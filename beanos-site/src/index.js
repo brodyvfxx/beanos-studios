@@ -1,0 +1,90 @@
+// Beanos Studios — Worker entry point.
+// Static files (html/css/js/images) are served automatically via the
+// ASSETS binding for any request that matches a real file. Anything
+// else (the /api/* routes below) is handled here.
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json" }
+  });
+}
+
+async function handleRatingsGet(url, env) {
+  const film = url.searchParams.get("film");
+  if (!film) return json({ error: "missing film" }, 400);
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) as count, AVG(rating) as average FROM ratings WHERE film_id = ?"
+  ).bind(film).first();
+  return json({ count: row?.count || 0, average: row?.average ?? null });
+}
+
+async function handleRatingsPost(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: "bad json" }, 400); }
+  const { film_id, rating } = body;
+  if (!film_id || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return json({ error: "invalid input" }, 400);
+  }
+  await env.DB.prepare("INSERT INTO ratings (film_id, rating) VALUES (?, ?)")
+    .bind(String(film_id).slice(0, 60), rating).run();
+  return json({ ok: true });
+}
+
+async function handleCommentsGet(url, env) {
+  const film = url.searchParams.get("film");
+  if (!film) return json({ error: "missing film" }, 400);
+  const { results } = await env.DB.prepare(
+    "SELECT id, name, message, likes, created_at FROM comments WHERE film_id = ? ORDER BY created_at DESC LIMIT 100"
+  ).bind(film).all();
+  return json(results || []);
+}
+
+async function handleCommentsPost(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: "bad json" }, 400); }
+  const { film_id, name, message } = body;
+  if (!film_id || typeof message !== "string" || message.trim().length === 0) {
+    return json({ error: "invalid input" }, 400);
+  }
+  if (message.length > 500) return json({ error: "too long" }, 400);
+  const safeName = (name || "").toString().trim().slice(0, 40);
+  await env.DB.prepare("INSERT INTO comments (film_id, name, message) VALUES (?, ?, ?)")
+    .bind(String(film_id).slice(0, 60), safeName || null, message.trim().slice(0, 500)).run();
+  return json({ ok: true });
+}
+
+async function handleLikePost(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: "bad json" }, 400); }
+  const { comment_id } = body;
+  if (!comment_id) return json({ error: "invalid input" }, 400);
+  await env.DB.prepare("UPDATE comments SET likes = likes + 1 WHERE id = ?").bind(comment_id).run();
+  return json({ ok: true });
+}
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const { pathname } = url;
+
+    try {
+      if (pathname === "/api/ratings") {
+        if (request.method === "GET") return await handleRatingsGet(url, env);
+        if (request.method === "POST") return await handleRatingsPost(request, env);
+      }
+      if (pathname === "/api/comments") {
+        if (request.method === "GET") return await handleCommentsGet(url, env);
+        if (request.method === "POST") return await handleCommentsPost(request, env);
+      }
+      if (pathname === "/api/like" && request.method === "POST") {
+        return await handleLikePost(request, env);
+      }
+    } catch (err) {
+      return json({ error: "server error", detail: String(err) }, 500);
+    }
+
+    // Not an /api/ route — serve the static site.
+    return env.ASSETS.fetch(request);
+  }
+};
