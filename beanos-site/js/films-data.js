@@ -3,6 +3,7 @@
 const FILMS = [
   {
     id: "cf1",
+    order: 1,
     title: "CF 1: Hats in Crime",
     videoId: "epjDG_ZHP0g",
     tags: ["mystery", "crime", "parody"],
@@ -16,6 +17,7 @@ const FILMS = [
   },
   {
     id: "prison-heist",
+    order: 2,
     title: "Prison Heist",
     videoId: "dKyTSjdEg6c",
     tags: ["crime", "heist", "action"],
@@ -30,6 +32,7 @@ const FILMS = [
   },
   {
     id: "alone-at-home",
+    order: 3,
     title: "Alone at Home",
     videoId: "215Lrny2YZU",
     tags: ["family", "home", "parody"],
@@ -46,6 +49,7 @@ const FILMS = [
   },
   {
     id: "tales-of-a-tender",
+    order: 4,
     title: "Tales of a Tender",
     videoId: "QWANDmqDGpQ",
     tags: ["western", "absurd"],
@@ -59,6 +63,7 @@ const FILMS = [
   },
   {
     id: "planet-battles",
+    order: 5,
     title: "Planet Battles",
     videoId: "jcLOyLJUUKI",
     tags: ["scifi", "alien", "epic", "parody"],
@@ -74,6 +79,7 @@ const FILMS = [
   },
   {
     id: "starvation-games",
+    order: 6,
     title: "Starvation Games",
     videoId: "GOqKleUGhbw",
     tags: ["dystopian", "competition", "parody"],
@@ -92,6 +98,7 @@ const FILMS = [
   },
   {
     id: "the-experiment",
+    order: 7,
     title: "The Experiment",
     videoId: "JK2OboEArRM",
     tags: ["horror", "scifi", "mystery", "dark"],
@@ -110,6 +117,7 @@ const FILMS = [
   },
   {
     id: "water-bottle-kicker",
+    order: 8,
     title: "The Water Bottle Kicker",
     videoId: "Wiciwd39vIQ",
     tags: ["mystery", "absurd"],
@@ -124,6 +132,7 @@ const FILMS = [
   },
   {
     id: "health-project",
+    order: 9,
     title: "Health Project",
     videoId: "9-VqUQglzFs",
     tags: ["family", "satire"],
@@ -136,6 +145,7 @@ const FILMS = [
   },
   {
     id: "the-gabafather",
+    order: 10,
     title: "The Gabafather",
     videoId: "v_pMh7-lo1g",
     tags: ["crime", "parody"],
@@ -154,6 +164,7 @@ const FILMS = [
   },
   {
     id: "earthcake-debbie",
+    order: 11,
     title: "Earthcake Debbie",
     videoId: "JfMGUuLt1C0",
     tags: ["family", "absurd", "apocalyptic"],
@@ -169,6 +180,7 @@ const FILMS = [
   },
   {
     id: "bolan-supreme",
+    order: 12,
     title: "Bolan Supreme",
     videoId: "1iNQXZE1X6w",
     tags: ["sports", "epic", "absurd"],
@@ -183,6 +195,7 @@ const FILMS = [
   },
   {
     id: "fixation",
+    order: 13,
     title: "Fixation",
     videoId: "sjVKc8wiJeY",
     tags: ["romance", "dark", "twisted"],
@@ -199,6 +212,7 @@ const FILMS = [
   },
   {
     id: "project-slarp",
+    order: 14,
     title: "Project Slarp",
     videoId: "NeSjgCYG_qQ",
     tags: ["scifi", "alien", "absurd"],
