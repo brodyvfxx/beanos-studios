@@ -280,6 +280,20 @@ section { padding: 64px 0; }
 .tape-label .tape-tags { font-family: var(--font-mono); font-size: 0.7rem; color: var(--purple); text-transform: uppercase; letter-spacing: 1px; }
 .tape-label .tape-rating { margin-top: 8px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); }
 
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
+}
+.sort-row label { margin-bottom: 0; }
+.sort-row select { width: auto; min-width: 180px; }
+
+.cast-name-link { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.cast-name-link:hover { color: var(--green); }
+
+.rating-hint { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
+
 /* quiz button strip */
 .quiz-cta {
   display: flex;
