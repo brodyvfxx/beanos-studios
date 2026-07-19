@@ -174,13 +174,14 @@ h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); }
   padding: 12px 22px;
   border-radius: 999px;
   border: 2px solid transparent;
+  background: transparent;
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .btn:hover { transform: translateY(-2px); }
 .btn-primary { background: var(--green); color: #06210f; box-shadow: 0 0 0 rgba(57,255,143,0); }
 .btn-primary:hover { box-shadow: 0 6px 22px rgba(57,255,143,0.35); }
-.btn-outline { border-color: var(--purple); color: var(--text); }
+.btn-outline { background: transparent; border-color: var(--purple); color: var(--text); }
 .btn-outline:hover { border-color: var(--green); }
 .btn-pink { background: var(--pink); color: #2b0022; }
 
