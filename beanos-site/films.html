@@ -41,6 +41,17 @@
       <button class="btn btn-primary" id="quiz-btn">Take the quiz</button>
     </div>
 
+    <div class="sort-row">
+      <label for="sort-select" style="margin:0;">Sort by</label>
+      <select id="sort-select">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="rating-desc">Highest rated</option>
+        <option value="rating-asc">Lowest rated</option>
+        <option value="alpha">A–Z</option>
+      </select>
+    </div>
+
     <div class="film-grid" id="all-film-grid"></div>
   </div>
 </section>
@@ -56,8 +67,17 @@
 <script src="js/main.js"></script>
 <script>
   document.getElementById("year").textContent = new Date().getFullYear();
-  renderFilmGrid(document.getElementById("all-film-grid"), FILMS);
   document.getElementById("quiz-btn").addEventListener("click", startQuiz);
+
+  const grid = document.getElementById("all-film-grid");
+  const sortSelect = document.getElementById("sort-select");
+
+  async function applySort() {
+    const sorted = await sortFilms(FILMS, sortSelect.value);
+    renderFilmGrid(grid, sorted);
+  }
+  sortSelect.addEventListener("change", applySort);
+  applySort();
 </script>
 </body>
 </html>
