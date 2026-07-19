@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beanos Studios — short films, mostly comedy</title>
+<meta name="description" content="Beanos Studios makes short films — parodies, originals, and everything in between. Watch them all here.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="Beanos Studios logo">
+      <span>BEANOS <em>STUDIOS</em></span>
+    </a>
+    <button class="nav-toggle">MENU</button>
+    <div class="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="films.html">Films</a>
+      <a href="cast.html">Meet the Cast</a>
+      <a href="suggestions.html">Suggestions</a>
+      <a href="contact.html">Inquiries &amp; Issues</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Now Renting</p>
+      <h1>Beanos Studios</h1>
+      <p class="lede">Short films shot in a living room, held together with props, bad wigs, and worse decisions. Parodies, originals, and everything in between — five to fifteen minutes of chaos at a time.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="films.html">Browse the films</a>
+        <button class="btn btn-outline" id="home-quiz-btn">What should I watch?</button>
+      </div>
+    </div>
+    <div class="hero-tape">
+      <img src="assets/logo.png" alt="Beanos Studios logo">
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Start here</p>
+      <h2>A few to press play on</h2>
+      <p>Every film is up on our YouTube channel — these are just a few to get you started. The full shelf is on the Films page.</p>
+    </div>
+    <div class="film-grid" id="home-film-grid"></div>
+    <div style="margin-top:30px; text-align:center;">
+      <a class="btn btn-outline" href="films.html">See every film</a>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <div class="wrap" style="display:grid; grid-template-columns: 1fr 1fr; gap:32px; align-items:center;">
+    <div>
+      <p class="eyebrow">Who's behind it</p>
+      <h2>One house, one phone, way too many characters</h2>
+      <p style="color:var(--text-dim); max-width:50ch;">Most of what you'll watch was filmed at one cast member's house, edited on a laptop, and cast with whoever was around that day. Meet everyone who's ever shown up on camera.</p>
+      <a class="btn btn-primary" href="cast.html" style="margin-top:16px;">Meet the cast</a>
+    </div>
+    <div class="form-card" style="max-width:none;">
+      <p class="eyebrow">Got an idea?</p>
+      <h3 style="margin:6px 0 10px;">Suggest a movie, a parody, anything</h3>
+      <p style="color:var(--text-dim); font-size:0.92rem; margin-bottom:16px;">If you've got a request or an idea for us, we actually read these.</p>
+      <a class="btn btn-pink" href="suggestions.html">Send a suggestion</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year"></span> Beanos Studios</span>
+    <span>Every film lives on our <a href="https://www.youtube.com/@Noly_24" target="_blank" rel="noopener">YouTube channel</a></span>
+  </div>
+</footer>
+
+<script src="js/films-data.js"></script>
+<script src="js/main.js"></script>
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+  renderFilmGrid(document.getElementById("home-film-grid"), FILMS.slice(0, 4));
+  document.getElementById("home-quiz-btn").addEventListener("click", startQuiz);
+</script>
+</body>
+</html>

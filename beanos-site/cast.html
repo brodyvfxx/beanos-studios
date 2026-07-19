@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meet the Cast — Beanos Studios</title>
+<meta name="description" content="The actors, editors, and directors behind every Beanos Studios film.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="Beanos Studios logo">
+      <span>BEANOS <em>STUDIOS</em></span>
+    </a>
+    <button class="nav-toggle">MENU</button>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="films.html">Films</a>
+      <a href="cast.html" class="active">Meet the Cast</a>
+      <a href="suggestions.html">Suggestions</a>
+      <a href="contact.html">Inquiries &amp; Issues</a>
+    </div>
+  </div>
+</nav>
+
+<section style="padding-top:48px;">
+  <div class="wrap">
+    <p class="eyebrow">Behind the camera and in front of it</p>
+    <h1 style="margin:8px 0 6px;">Meet the Cast</h1>
+    <p style="color:var(--text-dim); max-width:60ch; margin-bottom:40px;">Click any film credit below to jump straight to that film's page.</p>
+
+    <div class="cast-tier">
+      <span class="eyebrow">OG Members</span>
+      <div class="cast-grid" data-tier="og"></div>
+    </div>
+
+    <div class="cast-tier">
+      <span class="eyebrow">Joining Members</span>
+      <div class="cast-grid" data-tier="joining"></div>
+    </div>
+
+    <div class="cast-tier">
+      <span class="eyebrow">Extra Members</span>
+      <div class="cast-grid" data-tier="extra"></div>
+      <p class="honorable">Honorable mention: Oliver the Cat, who appeared as "Kitty Meow Meow" in The Gabafather.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year"></span> Beanos Studios</span>
+    <span>Every film lives on our <a href="https://www.youtube.com/@Noly_24" target="_blank" rel="noopener">YouTube channel</a></span>
+  </div>
+</footer>
+
+<script src="js/films-data.js"></script>
+<script src="js/main.js"></script>
+<script>
+document.getElementById("year").textContent = new Date().getFullYear();
+
+const CAST_INFO = [
+  { tier: "og", name: "Noran Keefer", role: "Actor · Editor", bio: "The heart of Beanos Studios — frankly, it wouldn't exist without him. Most films are shot at his own house using his phone and his props, and he's edited a majority of them." },
+  { tier: "og", name: "Brodizzle Mooligan", role: "Actor · Editor", bio: "A more advanced editor than Noran, though Noran usually gets asked to do it for his speed. Brodizzle has edited a handful of films and featured in a variety of others." },
+  { tier: "og", name: "Norah Johncocks", role: "Actor", bio: "Featured in nearly every Beanos film. Most notable role: the Killer in CF 1: Hats in Crime." },
+  { tier: "og", name: "TeeJay Part", role: "Actor", bio: "An actor for Beanos." },
+  { tier: "joining", name: "Jorey Tree", role: "Actor", bio: "An actor for Beanos." },
+  { tier: "joining", name: "Tricky Leyasu", role: "Actor", bio: "Iconic for his role as Jeremy in Alone at Home." },
+  { tier: "joining", name: "Hoodsen Fountain", role: "Actor", bio: "An actor for Beanos." },
+  { tier: "joining", name: "Colin Wood", role: "Actor", bio: "An actor for Beanos." },
+  { tier: "extra", name: "Ken Taco", role: "Actress", bio: "An actress for Beanos." },
+  { tier: "extra", name: "Sterla Bell", role: "Actress", bio: "An actress for Beanos." },
+  { tier: "extra", name: "Caden Johncocks", role: "Actor", bio: "An actor for Beanos. Brother of Norah Johncocks." }
+];
+
+function creditsFor(name) {
+  return FILMS.filter((f) => f.cast.some(([castName]) => castName === name));
+}
+
+["og", "joining", "extra"].forEach((tier) => {
+  const container = document.querySelector(`[data-tier="${tier}"]`);
+  const members = CAST_INFO.filter((m) => m.tier === tier);
+  members.forEach((m) => {
+    const films = creditsFor(m.name);
+    const card = document.createElement("div");
+    card.className = "cast-card";
+    card.innerHTML = `
+      <h3>${m.name}</h3>
+      <span class="role">${m.role}</span>
+      <p class="bio">${m.bio}</p>
+      <p class="credits"><b>Appears in:</b> ${films.length} film${films.length === 1 ? "" : "s"}</p>
+      <div class="crt-cast" style="margin-top:8px;"></div>
+    `;
+    const tagRow = card.querySelector(".crt-cast");
+    films.forEach((f) => {
+      const s = document.createElement("span");
+      s.style.cursor = "pointer";
+      s.textContent = f.title;
+      s.addEventListener("click", () => openFilmModal(f));
+      tagRow.appendChild(s);
+    });
+    container.appendChild(card);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inquiries &amp; Issues — Beanos Studios</title>
+<meta name="description" content="Business inquiries or issues to report — reach Beanos Studios directly.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="Beanos Studios logo">
+      <span>BEANOS <em>STUDIOS</em></span>
+    </a>
+    <button class="nav-toggle">MENU</button>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="films.html">Films</a>
+      <a href="cast.html">Meet the Cast</a>
+      <a href="suggestions.html">Suggestions</a>
+      <a href="contact.html" class="active">Inquiries &amp; Issues</a>
+    </div>
+  </div>
+</nav>
+
+<section style="padding-top:48px;">
+  <div class="wrap">
+    <p class="eyebrow">Business &amp; support</p>
+    <h1 style="margin:8px 0 6px;">Inquiries &amp; Issues</h1>
+    <p style="color:var(--text-dim); max-width:60ch; margin-bottom:34px;">Business inquiries, collaboration requests, or something on the site not working right — this goes straight to us.</p>
+
+    <div class="form-card">
+      <div class="form-success" id="success-box">Sent! We'll get back to you soon.</div>
+      <form id="contact-form">
+        <div class="field">
+          <label for="c-name">Name</label>
+          <input type="text" id="c-name" name="name" maxlength="60" required>
+        </div>
+        <div class="field">
+          <label for="c-email">Email</label>
+          <input type="email" id="c-email" name="email" required>
+        </div>
+        <div class="field">
+          <label for="c-reason">Reason</label>
+          <select id="c-reason" name="reason">
+            <option>General inquiry</option>
+            <option>Business inquiry</option>
+            <option>Report an issue</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="c-message">Message</label>
+          <textarea id="c-message" name="message" rows="5" required></textarea>
+        </div>
+        <input type="hidden" name="subject" value="New Inquiry — Beanos Studios">
+        <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_ACCESS_KEY">
+        <input type="checkbox" name="botcheck" class="hp-field" tabindex="-1" autocomplete="off">
+        <button type="submit" class="btn btn-primary">Send message</button>
+      </form>
+      <p class="form-note">Goes directly to our business email — no account or sign-up needed on your end.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year"></span> Beanos Studios</span>
+    <span>Every film lives on our <a href="https://www.youtube.com/@Noly_24" target="_blank" rel="noopener">YouTube channel</a></span>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+document.getElementById("year").textContent = new Date().getFullYear();
+
+document.getElementById("contact-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = form.querySelector("button[type=submit]");
+  const formData = new FormData(form);
+  if (formData.get("botcheck")) return; // honeypot tripped
+  const payload = Object.fromEntries(formData);
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+  try {
+    const res = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.success) {
+      document.getElementById("success-box").classList.add("show");
+      form.reset();
+    } else {
+      alert("Something went wrong sending that — try again in a moment.");
+    }
+  } catch (err) {
+    alert("Something went wrong sending that — try again in a moment.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Send message";
+  }
+});
+</script>
+</body>
+</html>

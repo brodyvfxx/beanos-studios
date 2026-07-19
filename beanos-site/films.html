@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Films — Beanos Studios</title>
+<meta name="description" content="Watch every Beanos Studios short film right here, in full quality, without leaving the site.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="Beanos Studios logo">
+      <span>BEANOS <em>STUDIOS</em></span>
+    </a>
+    <button class="nav-toggle">MENU</button>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="films.html" class="active">Films</a>
+      <a href="cast.html">Meet the Cast</a>
+      <a href="suggestions.html">Suggestions</a>
+      <a href="contact.html">Inquiries &amp; Issues</a>
+    </div>
+  </div>
+</nav>
+
+<section style="padding-top:48px;">
+  <div class="wrap">
+    <p class="eyebrow">The full shelf</p>
+    <h1 style="margin:8px 0 6px;">Films</h1>
+    <p style="color:var(--text-dim); max-width:60ch; margin-bottom:34px;">Every Beanos Studios short, straight from our <a href="https://www.youtube.com/@Noly_24" target="_blank" rel="noopener" style="color:var(--green);">YouTube channel</a>. Click a tape to see the cast and description, then hit play to watch right here.</p>
+
+    <div class="quiz-cta">
+      <div>
+        <h3>Don't know what to watch?</h3>
+        <p>Answer three questions and we'll pick one for you.</p>
+      </div>
+      <button class="btn btn-primary" id="quiz-btn">Take the quiz</button>
+    </div>
+
+    <div class="film-grid" id="all-film-grid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year"></span> Beanos Studios</span>
+    <span>Every film lives on our <a href="https://www.youtube.com/@Noly_24" target="_blank" rel="noopener">YouTube channel</a></span>
+  </div>
+</footer>
+
+<script src="js/films-data.js"></script>
+<script src="js/main.js"></script>
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+  renderFilmGrid(document.getElementById("all-film-grid"), FILMS);
+  document.getElementById("quiz-btn").addEventListener("click", startQuiz);
+</script>
+</body>
+</html>
