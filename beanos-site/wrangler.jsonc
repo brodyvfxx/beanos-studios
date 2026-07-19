@@ -1,0 +1,16 @@
+{
+  "name": "beanos-studios",
+  "compatibility_date": "2026-01-01",
+  "main": "src/index.js",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "beanos-db",
+      "database_id": "PASTE-YOUR-DATABASE-ID-HERE"
+    }
+  ]
+}
