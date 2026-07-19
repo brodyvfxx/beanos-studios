@@ -26,6 +26,14 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+function getClientId() {
+  let id = localStorage.getItem("beanos-client-id");
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    localStorage.setItem("beanos-client-id", id);
+  }
+  return id;
+}
 
 /* ---------- Film grid rendering ---------- */
 function renderFilmGrid(container, films) {
@@ -89,6 +97,7 @@ function openFilmModal(film) {
   const modal = ensureModal();
   const screen = modal.querySelector(".crt-screen");
   const body = modal.querySelector(".crt-body");
+  screen.style.display = "";
 
   screen.innerHTML = `
     <img src="${thumbUrl(film.videoId)}" alt="${escapeHtml(film.title)} thumbnail">
@@ -98,7 +107,7 @@ function openFilmModal(film) {
   screen.querySelector(".play-badge").addEventListener("click", () => playFilm(film.videoId));
 
   const castHtml = film.cast
-    .map(([name, role]) => `<span><b>${escapeHtml(name)}</b> — ${escapeHtml(role)}</span>`)
+    .map(([name, role]) => `<span><b class="cast-name-link" data-cast-name="${escapeHtml(name)}">${escapeHtml(name)}</b> — ${escapeHtml(role)}</span>`)
     .join("");
 
   body.innerHTML = `
@@ -110,6 +119,7 @@ function openFilmModal(film) {
     <div class="rating-row">
       <div class="stars" data-stars></div>
       <span class="rating-summary" data-rating-detail>Loading rating…</span>
+      <span class="rating-hint" data-rating-hint style="display:none;">(tap a star to change your rating)</span>
     </div>
 
     <div class="comments-section">
@@ -139,8 +149,28 @@ function openFilmModal(film) {
     e.preventDefault();
     submitComment(film.id, e.target);
   });
+  body.querySelectorAll("[data-cast-name]").forEach((el) => {
+    el.addEventListener("click", () => showPersonFilmography(el.dataset.castName));
+  });
 
   modal.classList.add("open");
+}
+
+function showPersonFilmography(name) {
+  const modal = ensureModal();
+  const screen = modal.querySelector(".crt-screen");
+  const body = modal.querySelector(".crt-body");
+  const films = FILMS.filter((f) => f.cast.some(([castName]) => castName === name));
+
+  screen.style.display = "none";
+  body.innerHTML = `
+    <button class="btn btn-outline" data-back-to-film style="margin-bottom:16px;">← Back to ${escapeHtml(currentFilm.title)}</button>
+    <p class="eyebrow">Appears in ${films.length} film${films.length === 1 ? "" : "s"}</p>
+    <h2>${escapeHtml(name)}</h2>
+    <div class="film-grid" data-person-films style="margin-top:16px;"></div>
+  `;
+  renderFilmGrid(body.querySelector("[data-person-films]"), films);
+  body.querySelector("[data-back-to-film]").addEventListener("click", () => openFilmModal(currentFilm));
 }
 
 function playFilm(videoId) {
@@ -162,6 +192,8 @@ function buildStars(container, filmId) {
   const storedKey = `beanos-rated-${filmId}`;
   const already = localStorage.getItem(storedKey);
   if (already) highlightStars(container, Number(already));
+  const hint = container.parentElement.querySelector("[data-rating-hint]");
+  if (hint) hint.style.display = already ? "inline" : "none";
 }
 
 function highlightStars(container, value) {
@@ -172,14 +204,15 @@ function highlightStars(container, value) {
 
 async function submitRating(filmId, value, starsContainer) {
   const storedKey = `beanos-rated-${filmId}`;
-  if (localStorage.getItem(storedKey)) return; // one rating per browser per film
   highlightStars(starsContainer, value);
   localStorage.setItem(storedKey, String(value));
+  const hint = starsContainer.parentElement.querySelector("[data-rating-hint]");
+  if (hint) hint.style.display = "inline";
   try {
     await fetch("/api/ratings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ film_id: filmId, rating: value })
+      body: JSON.stringify({ film_id: filmId, rating: value, client_id: getClientId() })
     });
   } catch (err) { /* fails silently — rating still shows locally */ }
   loadRatingDetail(filmId, document.querySelector("[data-rating-detail]"));
@@ -194,6 +227,36 @@ async function fetchRating(filmId) {
   } catch (err) {
     return { average: null, count: 0 };
   }
+}
+
+async function fetchAllRatings() {
+  try {
+    const res = await fetch("/api/ratings");
+    if (!res.ok) throw new Error("bad response");
+    return await res.json(); // { film_id: { average, count }, ... }
+  } catch (err) {
+    return {};
+  }
+}
+
+/* ---------- Sorting (used on the Films page) ---------- */
+async function sortFilms(films, mode) {
+  const list = films.slice();
+  if (mode === "newest") return list.sort((a, b) => b.order - a.order);
+  if (mode === "oldest") return list.sort((a, b) => a.order - b.order);
+  if (mode === "alpha") return list.sort((a, b) => a.title.localeCompare(b.title));
+  if (mode === "rating-desc" || mode === "rating-asc") {
+    const ratings = await fetchAllRatings();
+    const avg = (f) => (ratings[f.id] && ratings[f.id].count > 0 ? ratings[f.id].average : null);
+    return list.sort((a, b) => {
+      const av = avg(a), bv = avg(b);
+      if (av === null && bv === null) return 0;
+      if (av === null) return 1; // unrated films sink to the end either way
+      if (bv === null) return -1;
+      return mode === "rating-desc" ? bv - av : av - bv;
+    });
+  }
+  return list;
 }
 
 async function loadRatingSummary(filmId, selector) {
