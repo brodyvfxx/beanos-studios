@@ -12,7 +12,19 @@ function json(data, status = 200) {
 
 async function handleRatingsGet(url, env) {
   const film = url.searchParams.get("film");
-  if (!film) return json({ error: "missing film" }, 400);
+
+  if (!film) {
+    // No film specified — return aggregated ratings for every film, used for sorting.
+    const { results } = await env.DB.prepare(
+      "SELECT film_id, COUNT(*) as count, AVG(rating) as average FROM ratings GROUP BY film_id"
+    ).all();
+    const map = {};
+    (results || []).forEach((row) => {
+      map[row.film_id] = { count: row.count, average: row.average };
+    });
+    return json(map);
+  }
+
   const row = await env.DB.prepare(
     "SELECT COUNT(*) as count, AVG(rating) as average FROM ratings WHERE film_id = ?"
   ).bind(film).first();
@@ -22,12 +34,23 @@ async function handleRatingsGet(url, env) {
 async function handleRatingsPost(request, env) {
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: "bad json" }, 400); }
-  const { film_id, rating } = body;
+  const { film_id, rating, client_id } = body;
   if (!film_id || !Number.isInteger(rating) || rating < 1 || rating > 5) {
     return json({ error: "invalid input" }, 400);
   }
-  await env.DB.prepare("INSERT INTO ratings (film_id, rating) VALUES (?, ?)")
-    .bind(String(film_id).slice(0, 60), rating).run();
+  const safeFilmId = String(film_id).slice(0, 60);
+  const safeClientId = client_id ? String(client_id).slice(0, 80) : null;
+
+  if (safeClientId) {
+    // Upsert: changing your rating updates your existing row instead of adding a new one.
+    await env.DB.prepare(
+      `INSERT INTO ratings (film_id, client_id, rating) VALUES (?, ?, ?)
+       ON CONFLICT(film_id, client_id) DO UPDATE SET rating = excluded.rating, created_at = datetime('now')`
+    ).bind(safeFilmId, safeClientId, rating).run();
+  } else {
+    await env.DB.prepare("INSERT INTO ratings (film_id, rating) VALUES (?, ?)")
+      .bind(safeFilmId, rating).run();
+  }
   return json({ ok: true });
 }
 
