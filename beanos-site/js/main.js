@@ -288,45 +288,68 @@ async function likeComment(btn) {
 
 /* ============================================================
    QUIZ — "What should I watch?"
+   Films are grouped into 7 clear vibes (2 films each). Every
+   question offers all 7 vibes, reworded around a different
+   angle, so answers reliably converge on one vibe instead of
+   scattering across loosely-related tags.
    ============================================================ */
+const QUIZ_CATEGORIES = {
+  "crime-parody": { label: "Crime Parody", filmIds: ["cf1", "the-gabafather"] },
+  "heist-chaos": { label: "Heist & Chaos", filmIds: ["prison-heist", "alone-at-home"] },
+  "galaxy-parody": { label: "Galaxy-Sized Parody", filmIds: ["planet-battles", "project-slarp"] },
+  "survival-competition": { label: "Survival Competition", filmIds: ["starvation-games", "bolan-supreme"] },
+  "somethings-off": { label: "Something's Off", filmIds: ["the-experiment", "water-bottle-kicker"] },
+  "family-chaos": { label: "Family Chaos", filmIds: ["earthcake-debbie", "health-project"] },
+  "offbeat-heartfelt": { label: "Offbeat & Heartfelt", filmIds: ["fixation", "tales-of-a-tender"] }
+};
+
 const QUIZ_QUESTIONS = [
   {
-    q: "What's the mood tonight?",
+    q: "Pick a scene you'd want to walk into.",
     options: [
-      { label: "Something silly & absurd", tags: ["absurd", "parody"] },
-      { label: "A dark, twisted turn", tags: ["dark", "horror", "mystery"] },
-      { label: "Big, epic energy", tags: ["epic", "scifi"] },
-      { label: "A mystery to solve", tags: ["mystery", "crime"] }
+      { label: "A crime scene with a wise-cracking detective", cat: "crime-parody" },
+      { label: "Prisoners making a break for it", cat: "heist-chaos" },
+      { label: "A galaxy far, far away", cat: "galaxy-parody" },
+      { label: "An arena where only one person wins", cat: "survival-competition" },
+      { label: "A simulation where something's not right", cat: "somethings-off" },
+      { label: "A house that's gone completely off the rails", cat: "family-chaos" },
+      { label: "A quiet bar with a strange story to tell", cat: "offbeat-heartfelt" }
     ]
   },
   {
-    q: "Pick a setting.",
+    q: "What's the vibe you're chasing?",
     options: [
-      { label: "Outer space / a galaxy far away", tags: ["scifi", "alien"] },
-      { label: "A crime scene", tags: ["crime", "mystery"] },
-      { label: "Home sweet home", tags: ["family", "home"] },
-      { label: "The Wild West", tags: ["western"] }
+      { label: "Deadpan and mysterious", cat: "crime-parody" },
+      { label: "Fast, chaotic, a little dumb", cat: "heist-chaos" },
+      { label: "Big, epic, over-the-top", cat: "galaxy-parody" },
+      { label: "Competitive and cutthroat", cat: "survival-competition" },
+      { label: "Unsettling, in a funny way", cat: "somethings-off" },
+      { label: "Wholesome chaos", cat: "family-chaos" },
+      { label: "Sweet, with a twist", cat: "offbeat-heartfelt" }
     ]
   },
   {
-    q: "How do you like your comedy?",
+    q: "One more — pick a punchline style.",
     options: [
-      { label: "Full-blown parody of something famous", tags: ["parody"] },
-      { label: "Original and just plain weird", tags: ["absurd"] },
-      { label: "Competitive, high stakes", tags: ["dystopian", "competition", "sports"] },
-      { label: "Sweet, with a twist", tags: ["romance", "dark"] }
+      { label: "A twist you didn't see coming", cat: "crime-parody" },
+      { label: "Everything going wrong at once", cat: "heist-chaos" },
+      { label: "Something ridiculously over-the-top", cat: "galaxy-parody" },
+      { label: "Someone getting way too competitive", cat: "survival-competition" },
+      { label: "Something creepy, played for laughs", cat: "somethings-off" },
+      { label: "Family members losing it", cat: "family-chaos" },
+      { label: "A wish that backfires", cat: "offbeat-heartfelt" }
     ]
   }
 ];
 
-let quizModalEl, quizStep, quizScores;
+let quizModalEl, quizStep, quizVotes;
 
 function ensureQuizModal() {
   if (quizModalEl) return quizModalEl;
   quizModalEl = document.createElement("div");
   quizModalEl.className = "modal-overlay";
   quizModalEl.innerHTML = `
-    <div class="crt" role="dialog" aria-modal="true" style="max-width:520px;">
+    <div class="crt" role="dialog" aria-modal="true" style="max-width:560px;">
       <button class="crt-close" aria-label="Close">✕</button>
       <div class="crt-body" data-quiz-body></div>
     </div>
@@ -343,7 +366,7 @@ function closeQuiz() {
 
 function startQuiz() {
   quizStep = 0;
-  quizScores = {};
+  quizVotes = [];
   const modal = ensureQuizModal();
   renderQuizStep();
   modal.classList.add("open");
@@ -362,7 +385,7 @@ function renderQuizStep() {
   body.querySelectorAll("[data-opt]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const opt = question.options[Number(btn.dataset.opt)];
-      opt.tags.forEach((t) => (quizScores[t] = (quizScores[t] || 0) + 1));
+      quizVotes.push(opt.cat);
       quizStep++;
       if (quizStep < QUIZ_QUESTIONS.length) {
         renderQuizStep();
@@ -374,36 +397,35 @@ function renderQuizStep() {
 }
 
 function renderQuizResult() {
-  let best = null;
-  let bestScore = -1;
-  FILMS.forEach((film) => {
-    const score = film.tags.reduce((sum, t) => sum + (quizScores[t] || 0), 0);
-    if (score > bestScore) {
-      bestScore = score;
-      best = film;
+  // Tally votes; ties break toward the first question's pick,
+  // since that's the person's strongest initial instinct.
+  const tally = {};
+  quizVotes.forEach((cat) => (tally[cat] = (tally[cat] || 0) + 1));
+  let winner = quizVotes[0];
+  let winnerVotes = 0;
+  Object.keys(tally).forEach((cat) => {
+    if (tally[cat] > winnerVotes) {
+      winnerVotes = tally[cat];
+      winner = cat;
     }
   });
+
+  const category = QUIZ_CATEGORIES[winner];
+  const matches = category.filmIds.map((id) => FILMS.find((f) => f.id === id)).filter(Boolean);
+
   const body = quizModalEl.querySelector("[data-quiz-body]");
   body.innerHTML = `
     <div class="quiz-result">
-      <p class="eyebrow">Your pick is...</p>
-      <h2>${escapeHtml(best.title)}</h2>
-      <div class="tape-card" data-result-card>
-        <div class="tape-thumb">
-          <img src="${thumbUrl(best.videoId)}" alt="${escapeHtml(best.title)}">
-          <div class="play-badge"><div class="tri"></div></div>
-        </div>
-        <div class="tape-label">
-          <p class="tape-title">${escapeHtml(best.title)}</p>
-          <p class="tape-tags">${tagLabel(best.tags)}</p>
-        </div>
-      </div>
+      <p class="eyebrow">Your vibe is...</p>
+      <h2>${escapeHtml(category.label)}</h2>
+      <div class="film-grid" data-result-grid style="margin:18px 0; text-align:left;"></div>
       <button class="btn btn-outline" data-retake>Take quiz again</button>
     </div>
   `;
-  body.querySelector("[data-result-card]").addEventListener("click", () => {
-    closeQuiz();
-    openFilmModal(best);
-  });
+  renderFilmGrid(body.querySelector("[data-result-grid]"), matches);
   body.querySelector("[data-retake]").addEventListener("click", startQuiz);
+  // clicking a result card should close the quiz first
+  body.querySelectorAll("[data-result-grid] .tape-card").forEach((card) => {
+    card.addEventListener("click", closeQuiz, { once: true });
+  });
 }
