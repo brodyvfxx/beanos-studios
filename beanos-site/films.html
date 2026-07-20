@@ -39,9 +39,12 @@
     <div class="quiz-cta">
       <div>
         <h3>Don't know what to watch?</h3>
-        <p>Answer three questions and we'll pick one for you.</p>
+        <p>Answer three questions and we'll pick one for you — or just leave it to chance.</p>
       </div>
-      <button class="btn btn-primary" id="quiz-btn">Take the quiz</button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="quiz-btn">Take the quiz</button>
+        <button class="btn btn-outline" id="surprise-btn">🎲 Surprise me</button>
+      </div>
     </div>
 
     <div class="sort-row">
@@ -80,6 +83,10 @@
 <script>
   document.getElementById("year").textContent = new Date().getFullYear();
   document.getElementById("quiz-btn").addEventListener("click", startQuiz);
+  document.getElementById("surprise-btn").addEventListener("click", () => {
+    const random = FILMS[Math.floor(Math.random() * FILMS.length)];
+    openFilmModal(random);
+  });
 
   const grid = document.getElementById("all-film-grid");
   const sortSelect = document.getElementById("sort-select");

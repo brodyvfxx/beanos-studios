@@ -49,6 +49,16 @@
 
 <hr class="divider">
 
+<section id="continue-watching-section" style="display:none; padding-bottom:0;">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Welcome back</p>
+      <h2>Continue watching</h2>
+    </div>
+    <div class="film-grid" id="continue-watching-grid"></div>
+  </div>
+</section>
+
 <section>
   <div class="wrap">
     <div class="section-head">
@@ -94,8 +104,14 @@
 <script src="js/main.js"></script>
 <script>
   document.getElementById("year").textContent = new Date().getFullYear();
-  renderFilmGrid(document.getElementById("home-film-grid"), FILMS.slice(0, 4));
+  renderRandomRecentFilms(document.getElementById("home-film-grid"), 4);
   document.getElementById("home-quiz-btn").addEventListener("click", startQuiz);
+
+  const watched = getWatchedFilms();
+  if (watched.length > 0) {
+    document.getElementById("continue-watching-section").style.display = "";
+    renderFilmGrid(document.getElementById("continue-watching-grid"), watched);
+  }
 </script>
 </body>
 </html>
