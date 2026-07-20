@@ -135,6 +135,18 @@ h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); }
 .nav-links a:hover { color: var(--text); background: var(--panel); }
 .nav-links a.active { color: var(--bg); background: var(--green); }
 .nav-toggle { display: none; }
+.sound-toggle {
+  background: none;
+  border: 2px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: border-color 0.15s;
+}
+.sound-toggle:hover { border-color: var(--green); }
 
 @media (max-width: 760px) {
   .nav-links {
@@ -279,6 +291,8 @@ section { padding: 64px 0; }
 .tape-label .tape-title { font-family: var(--font-display); font-size: 0.95rem; margin: 0 0 6px; }
 .tape-label .tape-tags { font-family: var(--font-mono); font-size: 0.7rem; color: var(--purple); text-transform: uppercase; letter-spacing: 1px; }
 .tape-label .tape-rating { margin-top: 8px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); }
+.tape-label .tape-views { margin-top: 2px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); opacity: 0.85; min-height: 1em; }
+.modal-views { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); margin: 4px 0 0; min-height: 1em; }
 
 .sort-row {
   display: flex;
@@ -405,6 +419,13 @@ section { padding: 64px 0; }
 }
 .like-btn:hover { border-color: var(--pink); color: var(--pink); }
 .like-btn.liked { color: var(--pink); border-color: var(--pink); }
+.report-btn {
+  background: none; border: 1px solid var(--line); color: var(--text-dim);
+  font-family: var(--font-mono); font-size: 0.75rem; border-radius: 999px;
+  padding: 3px 10px; cursor: pointer;
+}
+.report-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
+.report-btn.reported { color: #ff6b6b; border-color: #ff6b6b; cursor: default; }
 .empty-note { color: var(--text-dim); font-size: 0.88rem; font-style: italic; }
 
 /* =========================================================
