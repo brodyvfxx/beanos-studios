@@ -35,6 +35,72 @@ function getClientId() {
   return id;
 }
 
+/* ---------- Watch history (for the homepage "Continue Watching" row) ---------- */
+function recordWatched(filmId) {
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem("beanos-watched") || "[]"); } catch (e) { /* ignore */ }
+  list = list.filter((id) => id !== filmId);
+  list.unshift(filmId);
+  localStorage.setItem("beanos-watched", JSON.stringify(list.slice(0, 10)));
+}
+function getWatchedFilms() {
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem("beanos-watched") || "[]"); } catch (e) { /* ignore */ }
+  return list.map((id) => FILMS.find((f) => f.id === id)).filter(Boolean);
+}
+
+/* ---------- YouTube view counts & publish dates ----------
+   Optional: gracefully does nothing until a YOUTUBE_API_KEY secret is
+   configured on the Worker. One batched request covers every film. */
+let YT_STATS_CACHE = null;
+async function ensureYtStats() {
+  if (YT_STATS_CACHE) return YT_STATS_CACHE;
+  try {
+    const ids = FILMS.map((f) => f.videoId).join(",");
+    const res = await fetch(`/api/youtube-stats?ids=${encodeURIComponent(ids)}`);
+    YT_STATS_CACHE = res.ok ? await res.json() : {};
+  } catch (e) {
+    YT_STATS_CACHE = {};
+  }
+  return YT_STATS_CACHE;
+}
+function formatViewCount(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
+function formatRelativeAge(dateStr) {
+  if (!dateStr) return "";
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
+  if (days < 1) return "today";
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+  if (days < 365) {
+    const months = Math.floor(days / 30);
+    return `${months} month${months === 1 ? "" : "s"} ago`;
+  }
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}
+
+/* ---------- Random-but-recent picks (used on the homepage) ---------- */
+async function renderRandomRecentFilms(container, count = 4, poolSize = 8) {
+  const stats = await ensureYtStats();
+  const withDates = FILMS.filter((f) => stats[f.videoId] && stats[f.videoId].publishedAt);
+  let pool;
+  if (withDates.length >= count) {
+    pool = withDates
+      .slice()
+      .sort((a, b) => new Date(stats[b.videoId].publishedAt) - new Date(stats[a.videoId].publishedAt))
+      .slice(0, poolSize);
+  } else {
+    // YouTube stats not configured yet — fall back to the given film order.
+    pool = FILMS.slice().sort((a, b) => b.order - a.order).slice(0, poolSize);
+  }
+  const shuffled = pool.slice().sort(() => Math.random() - 0.5);
+  renderFilmGrid(container, shuffled.slice(0, count));
+}
+
 /* ---------- Film grid rendering ---------- */
 function renderFilmGrid(container, films) {
   container.innerHTML = "";
@@ -51,11 +117,24 @@ function renderFilmGrid(container, films) {
         <p class="tape-title">${escapeHtml(film.title)}</p>
         <p class="tape-tags">${tagLabel(film.tags)}</p>
         <p class="tape-rating" data-rating-summary="${film.id}">Loading rating…</p>
+        <p class="tape-views" data-yt-stats="${film.id}"></p>
       </div>
     `;
     card.addEventListener("click", () => openFilmModal(film));
     container.appendChild(card);
     loadRatingSummary(film.id, `[data-rating-summary="${film.id}"]`);
+  });
+
+  ensureYtStats().then((stats) => {
+    films.forEach((film) => {
+      const el = container.querySelector(`[data-yt-stats="${film.id}"]`);
+      const s = stats[film.videoId];
+      if (!el || !s) return;
+      const parts = [];
+      if (s.viewCount) parts.push(`${formatViewCount(s.viewCount)} views`);
+      if (s.publishedAt) parts.push(formatRelativeAge(s.publishedAt));
+      el.textContent = parts.join(" · ");
+    });
   });
 }
 
@@ -103,8 +182,8 @@ function openFilmModal(film) {
     <img src="${thumbUrl(film.videoId)}" alt="${escapeHtml(film.title)} thumbnail">
     <div class="play-badge"><div class="tri"></div></div>
   `;
-  screen.querySelector("img").addEventListener("click", () => playFilm(film.videoId));
-  screen.querySelector(".play-badge").addEventListener("click", () => playFilm(film.videoId));
+  screen.querySelector("img").addEventListener("click", () => playFilm(film.videoId, film.id));
+  screen.querySelector(".play-badge").addEventListener("click", () => playFilm(film.videoId, film.id));
 
   const castHtml = film.cast
     .map(([name, role]) => `<span><b class="cast-name-link" data-cast-name="${escapeHtml(name)}">${escapeHtml(name)}</b> — ${escapeHtml(role)}</span>`)
@@ -113,6 +192,7 @@ function openFilmModal(film) {
   body.innerHTML = `
     <h2>${escapeHtml(film.title)}</h2>
     <p class="tape-tags">${tagLabel(film.tags)}</p>
+    <p class="modal-views" data-modal-views></p>
     <p class="desc">${escapeHtml(film.description)}</p>
     <div class="crt-cast">${castHtml}</div>
 
@@ -145,6 +225,15 @@ function openFilmModal(film) {
   buildStars(body.querySelector("[data-stars]"), film.id);
   loadRatingDetail(film.id, body.querySelector("[data-rating-detail]"));
   loadComments(film.id, body.querySelector("[data-comment-list]"));
+  ensureYtStats().then((stats) => {
+    const el = body.querySelector("[data-modal-views]");
+    const s = stats[film.videoId];
+    if (!el || !s) return;
+    const parts = [];
+    if (s.viewCount) parts.push(`${formatViewCount(s.viewCount)} views`);
+    if (s.publishedAt) parts.push(formatRelativeAge(s.publishedAt));
+    el.textContent = parts.join(" · ");
+  });
   body.querySelector("[data-comment-form]").addEventListener("submit", (e) => {
     e.preventDefault();
     submitComment(film.id, e.target);
@@ -173,9 +262,10 @@ function showPersonFilmography(name) {
   body.querySelector("[data-back-to-film]").addEventListener("click", () => openFilmModal(currentFilm));
 }
 
-function playFilm(videoId) {
+function playFilm(videoId, filmId) {
   const screen = document.querySelector(".crt-screen");
   screen.innerHTML = `<iframe src="${embedUrl(videoId)}" title="Beanos Studios film" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  if (filmId) recordWatched(filmId);
 }
 
 /* ---------- Star rating ---------- */
@@ -242,8 +332,20 @@ async function fetchAllRatings() {
 /* ---------- Sorting (used on the Films page) ---------- */
 async function sortFilms(films, mode) {
   const list = films.slice();
-  if (mode === "newest") return list.sort((a, b) => b.order - a.order);
-  if (mode === "oldest") return list.sort((a, b) => a.order - b.order);
+  if (mode === "newest" || mode === "oldest") {
+    const stats = await ensureYtStats();
+    const dateOf = (f) => {
+      const s = stats[f.videoId];
+      return s && s.publishedAt ? new Date(s.publishedAt).getTime() : null;
+    };
+    return list.sort((a, b) => {
+      const av = dateOf(a), bv = dateOf(b);
+      if (av === null && bv === null) return mode === "newest" ? b.order - a.order : a.order - b.order;
+      if (av === null) return 1;
+      if (bv === null) return -1;
+      return mode === "newest" ? bv - av : av - bv;
+    });
+  }
   if (mode === "alpha") return list.sort((a, b) => a.title.localeCompare(b.title));
   if (mode === "rating-desc" || mode === "rating-asc") {
     const ratings = await fetchAllRatings();
@@ -292,11 +394,15 @@ function renderComments(listEl, comments) {
   listEl.innerHTML = comments
     .map((c) => {
       const liked = localStorage.getItem(`beanos-liked-${c.id}`);
+      const reported = localStorage.getItem(`beanos-reported-${c.id}`);
       return `
       <div class="comment" data-comment-id="${c.id}">
         <div class="meta">
           <span>${escapeHtml(c.name || "Anonymous")}</span>
-          <button class="like-btn ${liked ? "liked" : ""}" data-like="${c.id}">♥ <span data-like-count>${c.likes}</span></button>
+          <span style="display:flex; gap:6px;">
+            <button class="like-btn ${liked ? "liked" : ""}" data-like="${c.id}">♥ <span data-like-count>${c.likes}</span></button>
+            <button class="report-btn ${reported ? "reported" : ""}" data-report="${c.id}">${reported ? "Reported" : "⚑ Report"}</button>
+          </span>
         </div>
         <p class="msg">${escapeHtml(c.message)}</p>
       </div>`;
@@ -306,6 +412,25 @@ function renderComments(listEl, comments) {
   listEl.querySelectorAll("[data-like]").forEach((btn) => {
     btn.addEventListener("click", () => likeComment(btn));
   });
+  listEl.querySelectorAll("[data-report]").forEach((btn) => {
+    btn.addEventListener("click", () => reportComment(btn));
+  });
+}
+
+async function reportComment(btn) {
+  const id = btn.getAttribute("data-report");
+  const key = `beanos-reported-${id}`;
+  if (localStorage.getItem(key)) return; // one report per browser per comment
+  localStorage.setItem(key, "1");
+  btn.classList.add("reported");
+  btn.textContent = "Reported";
+  try {
+    await fetch("/api/report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comment_id: id })
+    });
+  } catch (err) { /* already marked locally either way */ }
 }
 
 async function submitComment(filmId, form) {
