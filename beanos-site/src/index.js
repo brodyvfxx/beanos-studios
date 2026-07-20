@@ -58,7 +58,7 @@ async function handleCommentsGet(url, env) {
   const film = url.searchParams.get("film");
   if (!film) return json({ error: "missing film" }, 400);
   const { results } = await env.DB.prepare(
-    "SELECT id, name, message, likes, created_at FROM comments WHERE film_id = ? ORDER BY created_at DESC LIMIT 100"
+    "SELECT id, name, message, likes, created_at FROM comments WHERE film_id = ? AND reported < 3 ORDER BY created_at DESC LIMIT 100"
   ).bind(film).all();
   return json(results || []);
 }
@@ -86,6 +86,36 @@ async function handleLikePost(request, env) {
   return json({ ok: true });
 }
 
+async function handleReportPost(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: "bad json" }, 400); }
+  const { comment_id } = body;
+  if (!comment_id) return json({ error: "invalid input" }, 400);
+  // Auto-hide after 3 reports (handled by the < 3 filter in handleCommentsGet) —
+  // no admin panel needed; check the D1 console directly if you want to review or delete one.
+  await env.DB.prepare("UPDATE comments SET reported = reported + 1 WHERE id = ?").bind(comment_id).run();
+  return json({ ok: true });
+}
+
+async function handleYoutubeStats(url, env) {
+  const idsParam = url.searchParams.get("ids");
+  if (!idsParam) return json({ error: "missing ids" }, 400);
+  if (!env.YOUTUBE_API_KEY) return json({}, 200); // not configured yet — degrade quietly
+  const ids = idsParam.split(",").slice(0, 50).join(",");
+  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${encodeURIComponent(ids)}&key=${env.YOUTUBE_API_KEY}`;
+  const ytRes = await fetch(apiUrl);
+  if (!ytRes.ok) return json({}, 200); // don't break the page over a YouTube API hiccup
+  const data = await ytRes.json();
+  const map = {};
+  (data.items || []).forEach((item) => {
+    map[item.id] = {
+      viewCount: Number((item.statistics && item.statistics.viewCount) || 0),
+      publishedAt: (item.snippet && item.snippet.publishedAt) || null
+    };
+  });
+  return json(map);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -102,6 +132,12 @@ export default {
       }
       if (pathname === "/api/like" && request.method === "POST") {
         return await handleLikePost(request, env);
+      }
+      if (pathname === "/api/report" && request.method === "POST") {
+        return await handleReportPost(request, env);
+      }
+      if (pathname === "/api/youtube-stats" && request.method === "GET") {
+        return await handleYoutubeStats(url, env);
       }
     } catch (err) {
       return json({ error: "server error", detail: String(err) }, 500);
