@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Suggestions — Beanos Studios</title>
 <meta name="description" content="Suggest a movie, a parody idea, or anything else to Beanos Studios.">
-<link rel="icon" href="assets/logo.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -23,6 +25,7 @@
       <a href="cast.html">Meet the Cast</a>
       <a href="suggestions.html" class="active">Suggestions</a>
       <a href="contact.html">Inquiries &amp; Issues</a>
+      <button class="sound-toggle" data-sound-toggle aria-label="Mute sounds">🔊</button>
     </div>
   </div>
 </nav>
@@ -49,11 +52,11 @@
           </select>
         </div>
         <div class="field">
-          <label for="s-message"> suggestion</label>
+          <label for="s-message">Your suggestion</label>
           <textarea id="s-message" name="message" rows="5" required placeholder="Lay it on us..."></textarea>
         </div>
         <input type="hidden" name="subject" value="New Suggestion — Beanos Studios">
-        <input type="hidden" name="access_key" value="1bd51975-8a89-42ba-a700-bf1163e7ba7b">
+        <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_ACCESS_KEY">
         <input type="checkbox" name="botcheck" class="hp-field" tabindex="-1" autocomplete="off">
         <button type="submit" class="btn btn-primary">Send suggestion</button>
       </form>
@@ -69,6 +72,7 @@
   </div>
 </footer>
 
+<script src="js/sound.js"></script>
 <script src="js/main.js"></script>
 <script>
 document.getElementById("year").textContent = new Date().getFullYear();
