@@ -12,5 +12,12 @@
       "database_name": "beanos-db",
       "database_id": "ad5d0290-937e-4fbb-bcd7-7a7dde1396f0"
     }
+  ],
+  "secrets_store_secrets": [
+    {
+      "binding": "YOUTUBE_API_KEY",
+      "store_id": "4adc71b4681e4e7091272584d0c6430b",
+      "secret_name": "YOUTUBE_API_KEY"
+    }
   ]
 }
