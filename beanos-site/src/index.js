@@ -101,8 +101,18 @@ async function handleYoutubeStats(url, env) {
   const idsParam = url.searchParams.get("ids");
   if (!idsParam) return json({ error: "missing ids" }, 400);
   if (!env.YOUTUBE_API_KEY) return json({}, 200); // not configured yet — degrade quietly
+
+  let apiKey;
+  try {
+    // Secrets Store bindings expose a .get() accessor rather than a plain string.
+    apiKey = await env.YOUTUBE_API_KEY.get();
+  } catch (e) {
+    return json({}, 200);
+  }
+  if (!apiKey) return json({}, 200);
+
   const ids = idsParam.split(",").slice(0, 50).join(",");
-  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${encodeURIComponent(ids)}&key=${env.YOUTUBE_API_KEY}`;
+  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${encodeURIComponent(ids)}&key=${apiKey}`;
   const ytRes = await fetch(apiUrl);
   if (!ytRes.ok) return json({}, 200); // don't break the page over a YouTube API hiccup
   const data = await ytRes.json();
