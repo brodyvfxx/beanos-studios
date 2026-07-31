@@ -287,6 +287,19 @@ section { padding: 64px 0; }
   border-bottom: 14px solid transparent;
   border-left: 22px solid var(--green);
 }
+.featured-badge {
+  position: absolute;
+  top: 8px; left: 8px;
+  z-index: 2;
+  background: var(--pink);
+  color: #2b0022;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
 .tape-label { padding: 14px 16px 16px; }
 .tape-label .tape-title { font-family: var(--font-display); font-size: 0.95rem; margin: 0 0 6px; }
 .tape-label .tape-tags { font-family: var(--font-mono); font-size: 0.7rem; color: var(--purple); text-transform: uppercase; letter-spacing: 1px; }
