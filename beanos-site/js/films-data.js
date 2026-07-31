@@ -224,6 +224,23 @@ const FILMS = [
       ["Tricky Leyasu", "Friend, President Supporter"],
       ["Brodizzle Mooligan", "Alien, President"]
     ]
+  },
+  {
+    id: "risk",
+    order: 15,
+    featured: true,
+    title: "Risk",
+    videoId: "2CuKnHK_Zog",
+    tags: ["competition", "epic", "absurd"],
+    description: "When the makers of Risk created their game, their intent was to provide a strategic but fun game of war. Who knew that these boys would take it so seriously. In this new feature by Beanos Studios, alliances will be made, treaties will be broken, and you might have to take a risk, if you want to make it out alive.",
+    cast: [
+      ["Noran Keefer", "Chud"],
+      ["Tricky Leyasu", "Roman General / Boy In Grey"],
+      ["TeeJay Part", "Colonial Boy/Boy in Blue, boy who never got to play"],
+      ["Hoodsen Fountain", "Modern Day Boy, Boy in Grey"],
+      ["Norah Johncocks", "Pirate/Boy in White"],
+      ["Colin Wood", "Neandrathal/Boy in purple"]
+    ]
   }
 ];
 

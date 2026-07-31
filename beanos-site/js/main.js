@@ -85,8 +85,10 @@ function formatRelativeAge(dateStr) {
 
 /* ---------- Random-but-recent picks (used on the homepage) ---------- */
 async function renderRandomRecentFilms(container, count = 4, poolSize = 8) {
+  const featured = FILMS.filter((f) => f.featured);
+  const rest = FILMS.filter((f) => !f.featured);
   const stats = await ensureYtStats();
-  const withDates = FILMS.filter((f) => stats[f.videoId] && stats[f.videoId].publishedAt);
+  const withDates = rest.filter((f) => stats[f.videoId] && stats[f.videoId].publishedAt);
   let pool;
   if (withDates.length >= count) {
     pool = withDates
@@ -95,10 +97,12 @@ async function renderRandomRecentFilms(container, count = 4, poolSize = 8) {
       .slice(0, poolSize);
   } else {
     // YouTube stats not configured yet — fall back to the given film order.
-    pool = FILMS.slice().sort((a, b) => b.order - a.order).slice(0, poolSize);
+    pool = rest.slice().sort((a, b) => b.order - a.order).slice(0, poolSize);
   }
   const shuffled = pool.slice().sort(() => Math.random() - 0.5);
-  renderFilmGrid(container, shuffled.slice(0, count));
+  const remaining = Math.max(0, count - featured.length);
+  const finalList = [...featured, ...shuffled.slice(0, remaining)].slice(0, count);
+  renderFilmGrid(container, finalList);
 }
 
 /* ---------- Film grid rendering ---------- */
@@ -112,6 +116,7 @@ function renderFilmGrid(container, films) {
       <div class="tape-thumb">
         <img src="${thumbUrl(film.videoId)}" alt="${escapeHtml(film.title)} thumbnail" loading="lazy">
         <div class="play-badge"><div class="tri"></div></div>
+        ${film.featured ? '<span class="featured-badge">★ Featured</span>' : ""}
       </div>
       <div class="tape-label">
         <p class="tape-title">${escapeHtml(film.title)}</p>
@@ -485,7 +490,7 @@ const QUIZ_CATEGORIES = {
   "crime-parody": { label: "Crime Parody", filmIds: ["cf1", "the-gabafather"] },
   "heist-chaos": { label: "Heist & Chaos", filmIds: ["prison-heist", "alone-at-home"] },
   "galaxy-parody": { label: "Galaxy-Sized Parody", filmIds: ["planet-battles", "project-slarp"] },
-  "survival-competition": { label: "Survival Competition", filmIds: ["starvation-games", "bolan-supreme"] },
+  "survival-competition": { label: "Survival Competition", filmIds: ["starvation-games", "bolan-supreme", "risk"] },
   "somethings-off": { label: "Something's Off", filmIds: ["the-experiment", "water-bottle-kicker"] },
   "family-chaos": { label: "Family Chaos", filmIds: ["earthcake-debbie", "health-project"] },
   "offbeat-heartfelt": { label: "Offbeat & Heartfelt", filmIds: ["fixation", "tales-of-a-tender"] }
