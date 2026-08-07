@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "beanos-studios",
+  "compatibility_date": "2026-07-19",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "beanos-site"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
