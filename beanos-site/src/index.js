@@ -58,7 +58,7 @@ async function handleCommentsGet(url, env) {
   const film = url.searchParams.get("film");
   if (!film) return json({ error: "missing film" }, 400);
   const { results } = await env.DB.prepare(
-    "SELECT id, name, message, likes, created_at FROM comments WHERE film_id = ? AND reported < 3 ORDER BY created_at DESC LIMIT 100"
+    "SELECT id, name, message, likes, parent_id, created_at FROM comments WHERE film_id = ? AND reported < 3 ORDER BY created_at ASC LIMIT 200"
   ).bind(film).all();
   return json(results || []);
 }
@@ -66,14 +66,15 @@ async function handleCommentsGet(url, env) {
 async function handleCommentsPost(request, env) {
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: "bad json" }, 400); }
-  const { film_id, name, message } = body;
+  const { film_id, name, message, parent_id } = body;
   if (!film_id || typeof message !== "string" || message.trim().length === 0) {
     return json({ error: "invalid input" }, 400);
   }
   if (message.length > 500) return json({ error: "too long" }, 400);
   const safeName = (name || "").toString().trim().slice(0, 40);
-  await env.DB.prepare("INSERT INTO comments (film_id, name, message) VALUES (?, ?, ?)")
-    .bind(String(film_id).slice(0, 60), safeName || null, message.trim().slice(0, 500)).run();
+  const safeParentId = Number.isInteger(Number(parent_id)) && parent_id ? Number(parent_id) : null;
+  await env.DB.prepare("INSERT INTO comments (film_id, name, message, parent_id) VALUES (?, ?, ?, ?)")
+    .bind(String(film_id).slice(0, 60), safeName || null, message.trim().slice(0, 500), safeParentId).run();
   return json({ ok: true });
 }
 
