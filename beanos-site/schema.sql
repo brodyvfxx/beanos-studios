@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS comments (
   message TEXT NOT NULL,
   likes INTEGER DEFAULT 0,
   reported INTEGER DEFAULT 0,
+  parent_id INTEGER,
   created_at TEXT DEFAULT (datetime('now'))
 );
 
