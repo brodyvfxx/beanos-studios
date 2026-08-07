@@ -439,6 +439,24 @@ section { padding: 64px 0; }
 }
 .report-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
 .report-btn.reported { color: #ff6b6b; border-color: #ff6b6b; cursor: default; }
+
+.reply-btn {
+  background: none; border: none; color: var(--text-dim);
+  font-family: var(--font-mono); font-size: 0.72rem; cursor: pointer;
+  padding: 6px 0 0; text-decoration: underline dotted;
+}
+.reply-btn:hover { color: var(--green); }
+.reply-form-slot:not(:empty) { margin-top: 8px; }
+.reply-form-slot .comment-form { gap: 8px; margin-bottom: 0; }
+.comment-replies {
+  margin-top: 10px;
+  padding-left: 16px;
+  border-left: 2px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comment.reply { background: transparent; border: none; padding: 0; }
 .empty-note { color: var(--text-dim); font-size: 0.88rem; font-style: italic; }
 
 /* =========================================================
