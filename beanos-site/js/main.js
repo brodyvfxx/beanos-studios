@@ -391,34 +391,98 @@ async function loadComments(filmId, listEl) {
   }
 }
 
+function commentInnerHtml(c) {
+  const liked = localStorage.getItem(`beanos-liked-${c.id}`);
+  const reported = localStorage.getItem(`beanos-reported-${c.id}`);
+  return `
+    <div class="meta">
+      <span>${escapeHtml(c.name || "Anonymous")}</span>
+      <span style="display:flex; gap:6px;">
+        <button class="like-btn ${liked ? "liked" : ""}" data-like="${c.id}">♥ <span data-like-count>${c.likes}</span></button>
+        <button class="report-btn ${reported ? "reported" : ""}" data-report="${c.id}">${reported ? "Reported" : "⚑ Report"}</button>
+      </span>
+    </div>
+    <p class="msg">${escapeHtml(c.message)}</p>
+  `;
+}
+
 function renderComments(listEl, comments) {
   if (!comments || comments.length === 0) {
     listEl.innerHTML = `<p class="empty-note">No comments yet — say something!</p>`;
     return;
   }
-  listEl.innerHTML = comments
+
+  const topLevel = comments.filter((c) => !c.parent_id);
+  const repliesByParent = {};
+  comments.filter((c) => c.parent_id).forEach((c) => {
+    (repliesByParent[c.parent_id] = repliesByParent[c.parent_id] || []).push(c);
+  });
+  Object.values(repliesByParent).forEach((arr) => arr.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
+  // Top comments first, like YouTube — most liked at the top, newest as tiebreaker.
+  topLevel.sort((a, b) => (b.likes - a.likes) || (new Date(b.created_at) - new Date(a.created_at)));
+
+  listEl.innerHTML = topLevel
     .map((c) => {
-      const liked = localStorage.getItem(`beanos-liked-${c.id}`);
-      const reported = localStorage.getItem(`beanos-reported-${c.id}`);
+      const replies = repliesByParent[c.id] || [];
+      const repliesHtml = replies
+        .map((r) => `<div class="comment reply" data-comment-id="${r.id}">${commentInnerHtml(r)}</div>`)
+        .join("");
       return `
-      <div class="comment" data-comment-id="${c.id}">
-        <div class="meta">
-          <span>${escapeHtml(c.name || "Anonymous")}</span>
-          <span style="display:flex; gap:6px;">
-            <button class="like-btn ${liked ? "liked" : ""}" data-like="${c.id}">♥ <span data-like-count>${c.likes}</span></button>
-            <button class="report-btn ${reported ? "reported" : ""}" data-report="${c.id}">${reported ? "Reported" : "⚑ Report"}</button>
-          </span>
-        </div>
-        <p class="msg">${escapeHtml(c.message)}</p>
-      </div>`;
+        <div class="comment" data-comment-id="${c.id}">
+          ${commentInnerHtml(c)}
+          <button class="reply-btn" data-reply-toggle="${c.id}">↩ Reply</button>
+          <div class="reply-form-slot" data-reply-slot="${c.id}"></div>
+          ${replies.length ? `<div class="comment-replies">${repliesHtml}</div>` : ""}
+        </div>`;
     })
     .join("");
 
-  listEl.querySelectorAll("[data-like]").forEach((btn) => {
-    btn.addEventListener("click", () => likeComment(btn));
-  });
-  listEl.querySelectorAll("[data-report]").forEach((btn) => {
-    btn.addEventListener("click", () => reportComment(btn));
+  listEl.querySelectorAll("[data-like]").forEach((btn) => btn.addEventListener("click", () => likeComment(btn)));
+  listEl.querySelectorAll("[data-report]").forEach((btn) => btn.addEventListener("click", () => reportComment(btn)));
+  listEl.querySelectorAll("[data-reply-toggle]").forEach((btn) => btn.addEventListener("click", () => toggleReplyForm(btn, listEl)));
+}
+
+function toggleReplyForm(btn, listEl) {
+  const parentId = btn.getAttribute("data-reply-toggle");
+  const slot = listEl.querySelector(`[data-reply-slot="${parentId}"]`);
+  if (!slot) return;
+  if (slot.innerHTML) {
+    slot.innerHTML = "";
+    return;
+  }
+  slot.innerHTML = `
+    <form class="comment-form reply-form" data-reply-form="${parentId}">
+      <div class="field">
+        <label>Name (optional)</label>
+        <input type="text" name="name" maxlength="40" placeholder="Anonymous">
+      </div>
+      <div class="field">
+        <textarea name="message" rows="2" maxlength="500" required placeholder="Write a reply..."></textarea>
+      </div>
+      <input class="hp-field" tabindex="-1" autocomplete="off" type="text" name="website" placeholder="Leave blank">
+      <button type="submit" class="btn btn-primary" style="padding:8px 16px; font-size:0.78rem;">Post reply</button>
+    </form>
+  `;
+  slot.querySelector("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const name = form.name.value.trim();
+    const message = form.message.value.trim();
+    if (!message || form.website.value) return; // honeypot tripped or empty
+    const submitBtn = form.querySelector("button[type=submit]");
+    submitBtn.disabled = true;
+    try {
+      await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ film_id: currentFilm.id, name, message, parent_id: parentId })
+      });
+      slot.innerHTML = "";
+      loadComments(currentFilm.id, listEl);
+    } catch (err) {
+      alert("Reply couldn't be posted — try again in a moment.");
+      submitBtn.disabled = false;
+    }
   });
 }
 
