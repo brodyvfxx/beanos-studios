@@ -30,7 +30,23 @@
   </div>
 </nav>
 
-<section style="padding-top:48px;">
+<section class="hero-banner" id="hero-banner" style="display:none;">
+  <div class="hero-banner-bg" id="hero-banner-bg"></div>
+  <div class="hero-banner-fade"></div>
+  <div class="wrap hero-banner-content">
+    <p class="eyebrow" id="hb-eyebrow">Featured</p>
+    <h2 id="hb-title"></h2>
+    <p class="tape-tags" id="hb-tags"></p>
+    <p class="hero-banner-desc" id="hb-desc"></p>
+    <div class="hero-ctas">
+      <button class="btn btn-primary" id="hb-play">▶ Play</button>
+      <button class="btn btn-outline" id="hb-info">More Info</button>
+    </div>
+    <div class="hero-banner-dots" id="hb-dots"></div>
+  </div>
+</section>
+
+<section style="padding-top:20px;">
   <div class="wrap">
     <p class="eyebrow">The full shelf</p>
     <h1 style="margin:8px 0 6px;">Films</h1>
@@ -97,6 +113,54 @@
   }
   sortSelect.addEventListener("change", applySort);
   applySort();
+
+  /* ---------- Hero banner ---------- */
+  let bannerFilms = [];
+  let bannerIndex = 0;
+  let bannerTimer = null;
+
+  function showBannerFilm(i) {
+    bannerIndex = i;
+    const film = bannerFilms[i];
+    const bg = document.getElementById("hero-banner-bg");
+    const hi = `https://img.youtube.com/vi/${film.videoId}/maxresdefault.jpg`;
+    const lo = `https://img.youtube.com/vi/${film.videoId}/hqdefault.jpg`;
+    const probe = new Image();
+    probe.onload = () => { bg.style.backgroundImage = `url('${probe.width > 300 ? hi : lo}')`; };
+    probe.onerror = () => { bg.style.backgroundImage = `url('${lo}')`; };
+    probe.src = hi;
+
+    document.getElementById("hb-eyebrow").textContent = film.featured ? "Featured" : "Trending now";
+    document.getElementById("hb-title").textContent = film.title;
+    document.getElementById("hb-tags").textContent = tagLabel(film.tags);
+    document.getElementById("hb-desc").textContent = film.description;
+    document.getElementById("hb-play").onclick = () => { openFilmModal(film); playFilm(film.videoId, film.id); };
+    document.getElementById("hb-info").onclick = () => openFilmModal(film);
+
+    document.querySelectorAll(".hb-dot").forEach((d, idx) => d.classList.toggle("active", idx === i));
+  }
+
+  function restartBannerTimer() {
+    if (bannerTimer) clearInterval(bannerTimer);
+    if (bannerFilms.length > 1) {
+      bannerTimer = setInterval(() => showBannerFilm((bannerIndex + 1) % bannerFilms.length), 7000);
+    }
+  }
+
+  async function initHeroBanner() {
+    bannerFilms = await getBannerFilms(3);
+    if (bannerFilms.length === 0) return;
+    document.getElementById("hero-banner").style.display = "";
+    document.getElementById("hb-dots").innerHTML = bannerFilms
+      .map((_, i) => `<button class="hb-dot" data-dot="${i}" aria-label="Show banner ${i + 1}"></button>`)
+      .join("");
+    document.querySelectorAll(".hb-dot").forEach((btn) => {
+      btn.addEventListener("click", () => { showBannerFilm(Number(btn.dataset.dot)); restartBannerTimer(); });
+    });
+    showBannerFilm(0);
+    restartBannerTimer();
+  }
+  initHeroBanner();
 </script>
 </body>
 </html>

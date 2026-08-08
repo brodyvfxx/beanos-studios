@@ -42,7 +42,22 @@
       </div>
     </div>
     <div class="hero-tape">
-      <img src="assets/logo.png" alt="Beanos Studios logo">
+      <img src="assets/logo.png" alt="Beanos Studios logo" id="hero-logo" class="hero-logo-idle">
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">See it in action</p>
+      <h2>Our ad</h2>
+    </div>
+    <div class="ad-video-wrap">
+      <video id="ad-video" poster="assets/ad-poster.jpg" controls preload="none" playsinline>
+        <source src="assets/ad.mp4" type="video/mp4">
+      </video>
+      <button class="play-badge ad-play-badge" id="ad-play-badge" aria-label="Play advertisement"><div class="tri"></div></button>
     </div>
   </div>
 </section>
@@ -112,6 +127,27 @@
     document.getElementById("continue-watching-section").style.display = "";
     renderFilmGrid(document.getElementById("continue-watching-grid"), watched);
   }
+
+  // Ad video: click-to-play, badge disappears once it's actually playing
+  const adVideo = document.getElementById("ad-video");
+  const adBadge = document.getElementById("ad-play-badge");
+  adBadge.addEventListener("click", () => { adVideo.play(); });
+  adVideo.addEventListener("play", () => { adBadge.style.display = "none"; });
+  adVideo.addEventListener("pause", () => { adBadge.style.display = ""; });
+  adVideo.addEventListener("ended", () => { adBadge.style.display = ""; });
+
+  // Hero logo: idle motion always on, bigger reaction on click
+  const heroLogo = document.getElementById("hero-logo");
+  heroLogo.addEventListener("click", () => {
+    heroLogo.classList.remove("hero-logo-idle");
+    heroLogo.classList.add("hero-logo-pop");
+  });
+  heroLogo.addEventListener("animationend", (e) => {
+    if (e.animationName === "logo-pop") {
+      heroLogo.classList.remove("hero-logo-pop");
+      heroLogo.classList.add("hero-logo-idle");
+    }
+  });
 </script>
 </body>
 </html>
