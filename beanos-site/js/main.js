@@ -83,6 +83,30 @@ function formatRelativeAge(dateStr) {
   return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
+/* ---------- Banner picks (used for the Films-page hero banner) ----------
+   Featured films (like Risk) always lead. Remaining slots are filled from
+   a pool of relatively recent films, ranked by rating. */
+async function getBannerFilms(maxCount = 3, recentPoolSize = 6) {
+  const featured = FILMS.filter((f) => f.featured);
+  const rest = FILMS.filter((f) => !f.featured);
+
+  const ytStats = await ensureYtStats();
+  const withDates = rest.filter((f) => ytStats[f.videoId] && ytStats[f.videoId].publishedAt);
+  const recentPool = (withDates.length > 0
+    ? withDates.slice().sort((a, b) => new Date(ytStats[b.videoId].publishedAt) - new Date(ytStats[a.videoId].publishedAt))
+    : rest.slice().sort((a, b) => b.order - a.order)
+  ).slice(0, recentPoolSize);
+
+  const ratings = await fetchAllRatings();
+  const ranked = recentPool.slice().sort((a, b) => {
+    const ar = ratings[a.id] && ratings[a.id].count > 0 ? ratings[a.id].average : -1;
+    const br = ratings[b.id] && ratings[b.id].count > 0 ? ratings[b.id].average : -1;
+    return br - ar;
+  });
+
+  const remaining = Math.max(0, maxCount - featured.length);
+  return [...featured, ...ranked.slice(0, remaining)].slice(0, maxCount);
+}
 /* ---------- Random-but-recent picks (used on the homepage) ---------- */
 async function renderRandomRecentFilms(container, count = 4, poolSize = 8) {
   const featured = FILMS.filter((f) => f.featured);
